@@ -51,3 +51,8 @@ analysis_wireshark/python/GeoLite2-*
 *.p12
 secrets/
 credentials.json
+
+# ローカル専用メモ（GitHub に上げない）
+private-notes/
+*_自分用.md
+GITHUB公開手順.md
