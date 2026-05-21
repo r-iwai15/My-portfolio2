@@ -1,0 +1,52 @@
+# OS / Editor
+.DS_Store
+.vscode/
+.idea/
+*.swp
+*~
+
+# Node.js
+**/node_modules/
+npm-debug.log*
+
+# Python
+**/__pycache__/
+**/.pytest_cache/
+*.pyc
+.venv/
+venv/
+
+# Terraform
+**/.terraform/
+**/*.tfstate
+**/*.tfstate.*
+**/plan.tfplan
+**/.state/
+**/backends/s3.hcl
+**/crash.log
+**/override.tf
+**/*_override.tf
+**/*_override.tf.json
+**/dummy_*.zip
+
+# Build artifacts
+*.zip
+!**/.gitkeep
+dist/
+hotel_folder/dist/
+**/.coverage
+**/coverage/
+
+# GeoLite (MaxMind — do not redistribute; download locally)
+**/*.mmdb
+**/GeoLite2-*/
+analysis_wireshark/python/GeoLite2-*
+
+# Secrets
+.env
+.env.*
+*.pem
+*.key
+*.p12
+secrets/
+credentials.json

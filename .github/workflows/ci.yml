@@ -1,0 +1,36 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - master
+
+jobs:
+  hotel-platform:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: hotel_folder
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - uses: hashicorp/setup-terraform@v3
+
+      - name: Run Lambda tests
+        run: make test
+
+      - name: Terraform fmt check
+        run: make terraform-fmt-check
+
+      - name: Terraform validate
+        run: make terraform-validate

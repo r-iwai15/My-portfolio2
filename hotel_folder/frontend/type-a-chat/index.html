@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Type-A Chat Demo (Static Stub)</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 40rem; margin: 2rem auto; padding: 0 1rem; }
+    #log { border: 1px solid #ccc; min-height: 12rem; padding: 1rem; margin: 1rem 0; white-space: pre-wrap; }
+    input, button { font-size: 1rem; padding: 0.5rem; }
+    input { width: 70%; }
+    .note { color: #666; font-size: 0.9rem; }
+  </style>
+</head>
+<body>
+  <h1>Type-A コンシェルジュ（デモ UI スタブ）</h1>
+  <p class="note">
+    本番では Cognito 認可付き API Gateway の <code>POST /chat</code> に接続します。
+    この HTML はポートフォリオ用の静的モックです。
+  </p>
+  <div id="log" aria-live="polite">こんにちは。ご用件を入力してください。</div>
+  <div>
+    <input id="msg" placeholder="例: 来週末に海が見える部屋を予約したい" />
+    <button type="button" id="send">送信</button>
+  </div>
+  <script>
+    const log = document.getElementById("log");
+    const msg = document.getElementById("msg");
+    document.getElementById("send").onclick = () => {
+      const text = msg.value.trim();
+      if (!text) return;
+      log.textContent += `\n\n[あなた] ${text}\n[デモ] API 接続後、interface Lambda → Bedrock Agent が応答します。`;
+      msg.value = "";
+    };
+  </script>
+</body>
+</html>

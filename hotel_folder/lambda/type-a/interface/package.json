@@ -1,0 +1,14 @@
+{
+  "name": "hotel-type-a-interface",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@aws-sdk/client-bedrock-agent-runtime": "^3.0.0"
+  },
+  "devDependencies": {
+    "vitest": "^1.0.0"
+  }
+}
