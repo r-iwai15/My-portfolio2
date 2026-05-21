@@ -5,6 +5,19 @@
 PYTHON ?= python3
 PIP_FLAGS := $(if $(GITHUB_ACTIONS),,--break-system-packages)
 
+define run_pytest
+	cd $(1) && \
+	if [ -n "$$GITHUB_ACTIONS" ]; then \
+	  $(PYTHON) -m venv .venv-ci && \
+	  . .venv-ci/bin/activate && \
+	  pip install -q -r requirements-dev.txt && \
+	  pytest test_main.py -v; \
+	else \
+	  PYENV_DISABLE_REHASH=1 PIP_DISABLE_PIP_VERSION_CHECK=1 $(PYTHON) -m pip install -q -r requirements-dev.txt $(PIP_FLAGS) && \
+	  $(PYTHON) -m pytest test_main.py -v; \
+	fi
+endef
+
 .PHONY: test terraform-fmt-check terraform-validate \
         test-sentinel-enterprise test-sentinel-cloud-native test-rag-query
 
@@ -13,15 +26,11 @@ test: test-sentinel-enterprise test-sentinel-cloud-native test-rag-query
 
 test-sentinel-enterprise:
 	@echo "▶ sentinel_enterprise ..."
-	cd lambda/sentinel_enterprise && \
-	  PYENV_DISABLE_REHASH=1 PIP_DISABLE_PIP_VERSION_CHECK=1 $(PYTHON) -m pip install -q -r requirements-dev.txt $(PIP_FLAGS) && \
-	  $(PYTHON) -m pytest test_main.py -v
+	$(call run_pytest,lambda/sentinel_enterprise)
 
 test-sentinel-cloud-native:
 	@echo "▶ sentinel_cloud_native ..."
-	cd lambda/sentinel_cloud_native && \
-	  PYENV_DISABLE_REHASH=1 PIP_DISABLE_PIP_VERSION_CHECK=1 $(PYTHON) -m pip install -q -r requirements-dev.txt $(PIP_FLAGS) && \
-	  $(PYTHON) -m pytest test_main.py -v
+	$(call run_pytest,lambda/sentinel_cloud_native)
 
 test-rag-query:
 	@echo "▶ rag_query ..."

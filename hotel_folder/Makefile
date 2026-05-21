@@ -15,6 +15,20 @@ PYTHON ?= python3
 # macOS/Homebrew 用。GitHub Actions では workflow 側で PYTHON=python を渡す
 PIP_FLAGS := $(if $(GITHUB_ACTIONS),,--break-system-packages)
 
+# GitHub Actions では venv で pip を隔離（PEP 668 / python3 パス差分対策）
+define run_pytest
+	cd $(1) && \
+	if [ -n "$$GITHUB_ACTIONS" ]; then \
+	  $(PYTHON) -m venv .venv-ci && \
+	  . .venv-ci/bin/activate && \
+	  pip install -q -r requirements-dev.txt && \
+	  pytest test_main.py -v; \
+	else \
+	  PYENV_DISABLE_REHASH=1 PIP_DISABLE_PIP_VERSION_CHECK=1 $(PYTHON) -m pip install -q -r requirements-dev.txt $(PIP_FLAGS) && \
+	  $(PYTHON) -m pytest test_main.py -v; \
+	fi
+endef
+
 .PHONY: all ci test build clean terraform-fmt-check terraform-validate \
         terraform-plan-type-b terraform-plan-type-a terraform-plan-type-b-aws terraform-plan-type-a-aws \
         test-chatbot test-sentinel-exec test-sentinel-release \
@@ -45,15 +59,11 @@ test-chatbot:
 
 test-sentinel-exec:
 	@echo "▶ [Type-B] sentinel_executioner テスト中..."
-	cd lambda/type-b/sentinel_executioner && \
-	  PYENV_DISABLE_REHASH=1 PIP_DISABLE_PIP_VERSION_CHECK=1 $(PYTHON) -m pip install -q -r requirements-dev.txt $(PIP_FLAGS) && \
-	  $(PYTHON) -m pytest test_main.py -v
+	$(call run_pytest,lambda/type-b/sentinel_executioner)
 
 test-sentinel-release:
 	@echo "▶ [Type-B] sentinel_release テスト中..."
-	cd lambda/type-b/sentinel_release && \
-	  PYENV_DISABLE_REHASH=1 PIP_DISABLE_PIP_VERSION_CHECK=1 $(PYTHON) -m pip install -q -r requirements-dev.txt $(PIP_FLAGS) && \
-	  $(PYTHON) -m pytest test_main.py -v
+	$(call run_pytest,lambda/type-b/sentinel_release)
 
 test-reader:
 	@echo "▶ [Type-A] tools/reader テスト中..."

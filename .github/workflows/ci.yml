@@ -26,10 +26,16 @@ jobs:
 
       - uses: hashicorp/setup-terraform@v3
 
+      - name: Verify Python for tests
+        run: |
+          python --version
+          node --version
+          terraform version
+
       - name: Run Lambda tests
         env:
           PYTHON: python
-          GITHUB_ACTIONS: true
+          GITHUB_ACTIONS: "true"
         run: make test
 
       - name: Terraform fmt check
