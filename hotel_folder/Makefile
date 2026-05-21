@@ -11,6 +11,10 @@
 #   terraform apply は terraform/type-* から実行
 # =====================================================
 
+PYTHON ?= python3
+# macOS/Homebrew 用。GitHub Actions では workflow 側で PYTHON=python を渡す
+PIP_FLAGS := $(if $(GITHUB_ACTIONS),,--break-system-packages)
+
 .PHONY: all ci test build clean terraform-fmt-check terraform-validate \
         terraform-plan-type-b terraform-plan-type-a terraform-plan-type-b-aws terraform-plan-type-a-aws \
         test-chatbot test-sentinel-exec test-sentinel-release \
@@ -33,7 +37,7 @@ test: test-chatbot test-sentinel-exec test-sentinel-release \
 	@echo "\n✅ 全テスト完了"
 
 test-internal-infra:
-	@$(MAKE) -C internal-infra test
+	@$(MAKE) -C internal-infra test PYTHON="$(PYTHON)" GITHUB_ACTIONS="$(GITHUB_ACTIONS)"
 
 test-chatbot:
 	@echo "▶ [Type-B] chatbot テスト中..."
@@ -42,14 +46,14 @@ test-chatbot:
 test-sentinel-exec:
 	@echo "▶ [Type-B] sentinel_executioner テスト中..."
 	cd lambda/type-b/sentinel_executioner && \
-	  PYENV_DISABLE_REHASH=1 PIP_DISABLE_PIP_VERSION_CHECK=1 python3 -m pip install -q -r requirements-dev.txt --break-system-packages && \
-	  python3 -m pytest test_main.py -v
+	  PYENV_DISABLE_REHASH=1 PIP_DISABLE_PIP_VERSION_CHECK=1 $(PYTHON) -m pip install -q -r requirements-dev.txt $(PIP_FLAGS) && \
+	  $(PYTHON) -m pytest test_main.py -v
 
 test-sentinel-release:
 	@echo "▶ [Type-B] sentinel_release テスト中..."
 	cd lambda/type-b/sentinel_release && \
-	  PYENV_DISABLE_REHASH=1 PIP_DISABLE_PIP_VERSION_CHECK=1 python3 -m pip install -q -r requirements-dev.txt --break-system-packages && \
-	  python3 -m pytest test_main.py -v
+	  PYENV_DISABLE_REHASH=1 PIP_DISABLE_PIP_VERSION_CHECK=1 $(PYTHON) -m pip install -q -r requirements-dev.txt $(PIP_FLAGS) && \
+	  $(PYTHON) -m pytest test_main.py -v
 
 test-reader:
 	@echo "▶ [Type-A] tools/reader テスト中..."

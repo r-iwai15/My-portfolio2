@@ -2,6 +2,9 @@
 # AI-Driven Internal Infrastructure — build & test
 # =====================================================
 
+PYTHON ?= python3
+PIP_FLAGS := $(if $(GITHUB_ACTIONS),,--break-system-packages)
+
 .PHONY: test terraform-fmt-check terraform-validate \
         test-sentinel-enterprise test-sentinel-cloud-native test-rag-query
 
@@ -11,14 +14,14 @@ test: test-sentinel-enterprise test-sentinel-cloud-native test-rag-query
 test-sentinel-enterprise:
 	@echo "▶ sentinel_enterprise ..."
 	cd lambda/sentinel_enterprise && \
-	  PYENV_DISABLE_REHASH=1 PIP_DISABLE_PIP_VERSION_CHECK=1 python3 -m pip install -q -r requirements-dev.txt --break-system-packages && \
-	  python3 -m pytest test_main.py -v
+	  PYENV_DISABLE_REHASH=1 PIP_DISABLE_PIP_VERSION_CHECK=1 $(PYTHON) -m pip install -q -r requirements-dev.txt $(PIP_FLAGS) && \
+	  $(PYTHON) -m pytest test_main.py -v
 
 test-sentinel-cloud-native:
 	@echo "▶ sentinel_cloud_native ..."
 	cd lambda/sentinel_cloud_native && \
-	  PYENV_DISABLE_REHASH=1 PIP_DISABLE_PIP_VERSION_CHECK=1 python3 -m pip install -q -r requirements-dev.txt --break-system-packages && \
-	  python3 -m pytest test_main.py -v
+	  PYENV_DISABLE_REHASH=1 PIP_DISABLE_PIP_VERSION_CHECK=1 $(PYTHON) -m pip install -q -r requirements-dev.txt $(PIP_FLAGS) && \
+	  $(PYTHON) -m pytest test_main.py -v
 
 test-rag-query:
 	@echo "▶ rag_query ..."
