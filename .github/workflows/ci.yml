@@ -36,7 +36,14 @@ jobs:
         env:
           PYTHON: python
           GITHUB_ACTIONS: "true"
-        run: make test
+        run: |
+          make test-chatbot
+          make test-sentinel-exec
+          make test-sentinel-release
+          make test-reader
+          make test-interface
+          make test-reservation
+          make -C internal-infra test PYTHON=python GITHUB_ACTIONS=true
 
       - name: Terraform fmt check
         run: make terraform-fmt-check

@@ -1,3 +1,5 @@
+SHELL := /bin/bash
+
 # =====================================================
 # Hotel Reservation Platform - Lambda Build & Test
 #
