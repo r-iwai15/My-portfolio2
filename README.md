@@ -4,6 +4,8 @@
 
 **スコープ:** 本番 SaaS の完成品ではなく、設計比較・IaC 検証・セキュリティ調査のためのポートフォリオです。詳細は [`hotel_folder/docs/PORTFOLIO_STRATEGY.md`](hotel_folder/docs/PORTFOLIO_STRATEGY.md)。English: [`README.en.md`](README.en.md)
 
+**アーキテクチャ図:** [`hotel_folder/docs/ARCHITECTURE.md`](hotel_folder/docs/ARCHITECTURE.md)（全体俯瞰の 1 枚 + Type-A / Type-B / 社内インフラの詳細図）
+
 **検証:** `cd hotel_folder && make ci`（Lambda テスト + Terraform validate）。認証情報・state・`node_modules`・GeoLite `.mmdb` は含みません。
 
 各プロジェクトは独立したディレクトリで管理されており、技術的な正解を追求するだけでなく「組織文化やホスピタリティに技術をどう適応させるか」という視点を重視して設計されています。
