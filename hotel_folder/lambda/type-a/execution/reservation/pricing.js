@@ -1,4 +1,6 @@
-/** 決定論的料金（packages/pricing-engine と同一ロジック） */
+/**
+ * 決定論的料金計算（LLM 不使用）。本番では料金表 DB / ルールエンジンに置き換える。
+ */
 const RATES_JPY_PER_NIGHT = {
   SINGLE: 12_000,
   SUITE: 28_000,

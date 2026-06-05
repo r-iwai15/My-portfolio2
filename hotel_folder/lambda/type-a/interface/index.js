@@ -16,7 +16,13 @@ const AGENT_ID = process.env.BEDROCK_AGENT_ID;
 const AGENT_ALIAS_ID = process.env.BEDROCK_AGENT_ALIAS_ID ?? "TSTALIASID";
 
 export const handler = async (event) => {
-  const body = JSON.parse(event.body ?? "{}");
+  let body;
+  try {
+    body = JSON.parse(event.body ?? "{}");
+  } catch {
+    return { statusCode: 400, body: JSON.stringify({ error: "リクエストボディが不正な JSON です。" }) };
+  }
+
   const message = body.message;
   const sessionId = event.requestContext?.authorizer?.claims?.sub ?? `session-${Date.now()}`;
 

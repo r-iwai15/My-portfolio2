@@ -82,11 +82,7 @@ resource "aws_iam_role_policy" "lambda_sqs_ses" {
         ]
       },
       {
-        Effect   = "Allow"
-        Action   = ["secretsmanager:GetSecretValue"]
-        Resource = aws_secretsmanager_secret.db_credentials.arn
-      },
-      {
+        # KMS 暗号化された SQS メッセージの復号に必要（send_email は SES のみ使用）
         Effect   = "Allow"
         Action   = ["kms:Decrypt"]
         Resource = aws_kms_key.main.arn
@@ -112,7 +108,6 @@ resource "aws_lambda_function" "send_confirmation" {
 
   environment {
     variables = {
-      SECRET_ARN = aws_secretsmanager_secret.db_credentials.arn
       FROM_EMAIL = var.from_email
     }
   }

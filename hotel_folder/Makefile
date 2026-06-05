@@ -33,10 +33,22 @@ endef
 
 .PHONY: all ci test build clean terraform-fmt-check terraform-validate \
         terraform-plan-type-b terraform-plan-type-a terraform-plan-type-b-aws terraform-plan-type-a-aws \
-        test-chatbot test-sentinel-exec test-sentinel-release \
+        test-chatbot test-sentinel-exec test-sentinel-release test-send-email \
         test-reader test-interface test-reservation \
-        test-internal-infra \
-        build-chatbot build-sentinel build-reader build-interface build-reservation
+        test-internal-infra sync-schema \
+        build-chatbot build-sentinel build-send-email build-reader build-interface build-reservation
+
+# 予約意図スキーマ／料金ロジックの Source of Truth は packages/ 配下。
+# Lambda zip を自己完結させるため、ビルド/テスト前にローカルへ同期してドリフトを防ぐ。
+SCHEMA_SRC  := packages/reservation-schema/intent.schema.json
+SCHEMA_DST  := lambda/type-a/execution/reservation/intent.schema.json
+PRICING_SRC := packages/pricing-engine/calculate.js
+PRICING_DST := lambda/type-a/execution/reservation/pricing.js
+
+sync-schema:
+	@cp $(SCHEMA_SRC) $(SCHEMA_DST)
+	@cp $(PRICING_SRC) $(PRICING_DST)
+	@echo "▶ intent.schema.json / pricing.js を packages/ から同期しました"
 
 all: test build
 
@@ -48,7 +60,7 @@ ci: test terraform-fmt-check terraform-validate
 # テスト
 # =====================================================
 
-test: test-chatbot test-sentinel-exec test-sentinel-release \
+test: test-chatbot test-sentinel-exec test-sentinel-release test-send-email \
       test-reader test-interface test-reservation test-internal-infra
 	@echo "\n✅ 全テスト完了"
 
@@ -67,6 +79,10 @@ test-sentinel-release:
 	@echo "▶ [Type-B] sentinel_release テスト中..."
 	$(call run_pytest,lambda/type-b/sentinel_release)
 
+test-send-email:
+	@echo "▶ [Type-B] send_email テスト中..."
+	cd lambda/type-b/send_email && npm install --silent && npm test
+
 test-reader:
 	@echo "▶ [Type-A] tools/reader テスト中..."
 	cd lambda/type-a/tools/reader && npm install --silent && npm test
@@ -75,7 +91,7 @@ test-interface:
 	@echo "▶ [Type-A] interface テスト中..."
 	cd lambda/type-a/interface && npm install --silent && npm test
 
-test-reservation:
+test-reservation: sync-schema
 	@echo "▶ [Type-A] execution/reservation テスト中..."
 	cd lambda/type-a/execution/reservation && npm install --silent && npm test
 
@@ -117,7 +133,7 @@ terraform-plan-type-a-aws:
 # ビルド (lambda/ 直下にZIPを出力)
 # =====================================================
 
-build: build-chatbot build-sentinel build-reader build-interface build-reservation
+build: build-chatbot build-sentinel build-send-email build-reader build-interface build-reservation
 	@echo "\n📦 全ZIPビルド完了 → lambda/*.zip"
 
 build-chatbot:
@@ -136,6 +152,13 @@ build-sentinel:
 	@echo "  → lambda/sentinel_executioner.zip"
 	@echo "  → lambda/sentinel_release.zip"
 
+build-send-email:
+	@echo "▶ [Type-B] send_email をビルド中..."
+	cd lambda/type-b/send_email && \
+	  npm install --omit=dev --silent && \
+	  zip -rq ../../../lambda/send_email.zip . --exclude "*.test.js" "*.md" ".gitignore"
+	@echo "  → lambda/send_email.zip"
+
 build-reader:
 	@echo "▶ [Type-A] tools/reader をビルド中..."
 	cd lambda/type-a/tools/reader && \
@@ -150,7 +173,7 @@ build-interface:
 	  zip -rq ../../../lambda/interface.zip . --exclude "*.test.js" "*.md" ".gitignore"
 	@echo "  → lambda/interface.zip"
 
-build-reservation:
+build-reservation: sync-schema
 	@echo "▶ [Type-A] execution/reservation をビルド中..."
 	cd lambda/type-a/execution/reservation && \
 	  npm install --omit=dev --silent && \
@@ -164,7 +187,6 @@ clean:
 	      lambda/reader.zip \
 	      lambda/interface.zip \
 	      lambda/reservation.zip \
-	      lambda/writer.zip \
 	      lambda/send_email.zip
 	find lambda -name "node_modules" -type d -exec rm -rf {} + 2>/dev/null || true
 	find lambda -name "__pycache__"  -type d -exec rm -rf {} + 2>/dev/null || true

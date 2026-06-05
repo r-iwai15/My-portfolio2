@@ -66,6 +66,16 @@ resource "aws_security_group" "lambda" {
   name   = "hotel-innovative-lambda-sg"
   vpc_id = module.vpc.vpc_id
 
+  # このSGはインターフェース型VPCエンドポイントにもアタッチされる。
+  # エンドポイントENIがVPC内（Lambda/EC2 app）からの接続を受けるにはインバウンド443が必須。
+  ingress {
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = [module.vpc.vpc_cidr_block]
+    description = "HTTPS to interface VPC endpoints from within the VPC"
+  }
+
   # VPC Endpoint への HTTPS
   egress {
     from_port   = 443
@@ -131,13 +141,8 @@ resource "aws_security_group" "db" {
     description     = "MySQL from App and Lambda only"
   }
 
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = []
-    description = "Deny all outbound traffic for DLP"
-  }
+  # DLP: egress ルールを一切定義しないことで全アウトバウンドを拒否する。
+  # （cidr_blocks=[] の空 egress は apply 時にエラーになるため定義しない）
 
   tags = {
     Name = "db-sg"

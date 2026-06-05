@@ -45,6 +45,21 @@ resource "aws_kms_key" "main" {
             "aws:SourceAccount" = data.aws_caller_identity.current.account_id
           }
         }
+      },
+      {
+        # KMS 暗号化された SNS トピック(ops_alert)に CloudWatch アラーム / EventBridge が
+        # 発行するには、これらのサービスがデータキーを生成・復号できる必要がある。
+        # これが無いとアラーム通知が KMS アクセス拒否で失敗する。
+        Sid    = "AllowEventsAndAlarmsToEncryptSNS"
+        Effect = "Allow"
+        Principal = {
+          Service = [
+            "events.amazonaws.com",
+            "cloudwatch.amazonaws.com"
+          ]
+        }
+        Action   = ["kms:GenerateDataKey*", "kms:Decrypt"]
+        Resource = "*"
       }
     ]
   })

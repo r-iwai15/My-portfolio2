@@ -115,6 +115,11 @@ Lambda: sentinel_enterprise
     └── [MEDIUM]   CloudWatch Logs に記録 → 週次セキュリティレポートに集約
 ```
 
+> **現在の実装状況:** `sentinel_enterprise` Lambda は IaC 検証用のスタブです。本番では上記のように
+> CRITICAL と HIGH を分岐させますが、スタブでは CRITICAL/HIGH をまとめて `revoke_or_isolate` を返し、
+> MEDIUM を `log_and_report`、それ以外を `log_only` にルーティングするところまでを実装しています。
+> severity は文字列ラベル・数値スコア・Security Hub の `{Label, Normalized}` 形式のいずれも受け付けます。
+
 ---
 
 ## Type-A: Cloud-Native Edition — 詳細設計（概要）
@@ -141,8 +146,8 @@ VPC Endpoints（PrivateLink）
 
 - **Identity:** IAM Identity Center、SCIM、Verified Access、MFA・短いセッション
 - **Network:** IGW なし、VPC Endpoints、Network Firewall
-- **Application:** Bedrock Knowledge Base、Claude、`rag_query` Lambda、DynamoDB 会話履歴
-- **Developer Self-Service:** `provisioner` Lambda、Service Catalog、SCP Guardrails、GitHub Actions OIDC
+- **Application:** Bedrock Knowledge Base、Claude、`rag_query` Lambda（スタブ実装あり）、DynamoDB 会話履歴
+- **Developer Self-Service:** Service Catalog、SCP Guardrails、GitHub Actions OIDC、開発者セルフサービス用 Lambda（将来実装予定。現リポジトリには未収録）
 
 ---
 

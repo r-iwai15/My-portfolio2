@@ -1,5 +1,6 @@
 terraform {
-  required_version = ">= 1.0.0"
+  # moved ブロック（1.1+）と本番用 S3 backend の use_lockfile（1.10+）を使用するため。
+  required_version = ">= 1.10.0"
   required_providers {
     aws = {
       source  = "hashicorp/aws"

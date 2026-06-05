@@ -5,7 +5,7 @@ output "compliance_kms_arn" {
 
 output "compliance_logs_bucket" {
   value       = aws_s3_bucket.compliance_logs.id
-  description = "S3 bucket for compliance / flow log storage."
+  description = "S3 bucket for compliance log storage (VPC flow logs go to CloudWatch Logs, not this bucket)."
 }
 
 output "workload_vpc_id" {

@@ -5,11 +5,28 @@ updates:
     schedule:
       interval: "weekly"
 
+  # ---- Type-B (外向け) ----
   - package-ecosystem: "npm"
     directory: "/hotel_folder/lambda/type-b/chatbot"
     schedule:
       interval: "weekly"
 
+  - package-ecosystem: "npm"
+    directory: "/hotel_folder/lambda/type-b/send_email"
+    schedule:
+      interval: "weekly"
+
+  - package-ecosystem: "pip"
+    directory: "/hotel_folder/lambda/type-b/sentinel_executioner"
+    schedule:
+      interval: "weekly"
+
+  - package-ecosystem: "pip"
+    directory: "/hotel_folder/lambda/type-b/sentinel_release"
+    schedule:
+      interval: "weekly"
+
+  # ---- Type-A (外向け) ----
   - package-ecosystem: "npm"
     directory: "/hotel_folder/lambda/type-a/tools/reader"
     schedule:
@@ -22,5 +39,21 @@ updates:
 
   - package-ecosystem: "npm"
     directory: "/hotel_folder/lambda/type-a/execution/reservation"
+    schedule:
+      interval: "weekly"
+
+  # ---- internal-infra (社内) ----
+  - package-ecosystem: "npm"
+    directory: "/hotel_folder/internal-infra/lambda/rag_query"
+    schedule:
+      interval: "weekly"
+
+  - package-ecosystem: "pip"
+    directory: "/hotel_folder/internal-infra/lambda/sentinel_enterprise"
+    schedule:
+      interval: "weekly"
+
+  - package-ecosystem: "pip"
+    directory: "/hotel_folder/internal-infra/lambda/sentinel_cloud_native"
     schedule:
       interval: "weekly"

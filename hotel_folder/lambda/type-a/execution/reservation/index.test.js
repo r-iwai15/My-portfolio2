@@ -10,9 +10,10 @@ vi.mock("@aws-sdk/client-dynamodb", () => ({
 }));
 vi.mock("@aws-sdk/lib-dynamodb", () => ({
   DynamoDBDocumentClient: { from: vi.fn(() => ({ send: mockDdbSend })) },
-  GetCommand: vi.fn((input) => input),
-  PutCommand: vi.fn((input) => input),
-  UpdateCommand: vi.fn((input) => input),
+  GetCommand: vi.fn((input) => ({ ...input, __type: "Get" })),
+  PutCommand: vi.fn((input) => ({ ...input, __type: "Put" })),
+  UpdateCommand: vi.fn((input) => ({ ...input, __type: "Update" })),
+  TransactWriteCommand: vi.fn((input) => ({ ...input, __type: "Transact" })),
 }));
 
 process.env.TABLE_NAME = "hotel-agile-ai-reservations";
@@ -73,6 +74,49 @@ describe("Reservation Execution (Bedrock Agent → DynamoDB)", () => {
       const body = JSON.parse(res.response.responseBody["application/json"].body);
       expect(body.deduplicated).toBe(true);
       expect(body.reservationId).toBe("RES-EXIST1");
+    });
+
+    it("新規 idempotencyKey は予約とべき等レコードをトランザクションで原子的に書き込む", async () => {
+      mockDdbSend.mockImplementation((cmd) => {
+        if (cmd.__type === "Get") return {}; // 既存なし
+        return {}; // Transact 成功
+      });
+      const res = await handler(
+        makeAgentEvent({ ...CREATE_PARAMS, idempotencyKey: "new-idem-key-123" })
+      );
+      const body = JSON.parse(res.response.responseBody["application/json"].body);
+      expect(body.success).toBe(true);
+      expect(body.reservationId).toMatch(/^RES-/);
+
+      const transactCall = mockDdbSend.mock.calls.find((c) => c[0].__type === "Transact");
+      expect(transactCall).toBeDefined();
+      expect(transactCall[0].TransactItems).toHaveLength(2);
+      // 1件目はべき等性レコード、ConditionExpression で二重実行を防ぐ
+      expect(transactCall[0].TransactItems[0].Put.Item.PK).toMatch(/^IDEMPOTENCY#/);
+      expect(transactCall[0].TransactItems[0].Put.ConditionExpression).toContain("attribute_not_exists");
+    });
+
+    it("トランザクション競合時は既存予約を返す（レース）", async () => {
+      mockDdbSend.mockImplementation((cmd) => {
+        if (cmd.__type === "Get") {
+          // 1回目は存在なし、競合後の再読込で既存を返す
+          return mockDdbSend.mock.calls.filter((c) => c[0].__type === "Get").length > 1
+            ? { Item: { reservationId: "RES-RACE99" } }
+            : {};
+        }
+        if (cmd.__type === "Transact") {
+          const e = new Error("conflict");
+          e.name = "TransactionCanceledException";
+          throw e;
+        }
+        return {};
+      });
+      const res = await handler(
+        makeAgentEvent({ ...CREATE_PARAMS, idempotencyKey: "race-idem-key-1" })
+      );
+      const body = JSON.parse(res.response.responseBody["application/json"].body);
+      expect(body.deduplicated).toBe(true);
+      expect(body.reservationId).toBe("RES-RACE99");
     });
   });
 

@@ -3,7 +3,13 @@
  */
 
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
-import { DynamoDBDocumentClient, GetCommand, PutCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
+import {
+  DynamoDBDocumentClient,
+  GetCommand,
+  PutCommand,
+  UpdateCommand,
+  TransactWriteCommand,
+} from "@aws-sdk/lib-dynamodb";
 import { parametersToIntent, validateIntent } from "./validate.js";
 import { calculateStayPrice, nightsBetween } from "./pricing.js";
 
@@ -35,21 +41,6 @@ async function findIdempotentReservation(idempotencyKey) {
   return result.Item?.reservationId ?? null;
 }
 
-async function recordIdempotency(idempotencyKey, reservationId) {
-  await dynamo.send(
-    new PutCommand({
-      TableName: TABLE_NAME,
-      Item: {
-        PK: `IDEMPOTENCY#${idempotencyKey}`,
-        SK: "META",
-        reservationId,
-        createdAt: new Date().toISOString(),
-      },
-      ConditionExpression: "attribute_not_exists(PK)",
-    })
-  );
-}
-
 async function createReservation(event, intent) {
   const { guestName, checkIn, checkOut, roomType, idempotencyKey } = intent;
 
@@ -67,31 +58,50 @@ async function createReservation(event, intent) {
 
   const totalPriceJpy = calculateStayPrice(roomType, nights);
   const reservationId = `RES-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+  const now = new Date().toISOString();
+  const reservationItem = {
+    PK: `RESERVATION#${reservationId}`,
+    SK: "META",
+    reservationId,
+    guestName,
+    checkIn,
+    checkOut,
+    roomType,
+    nights,
+    totalPriceJpy,
+    status: "CONFIRMED",
+    createdAt: now,
+  };
 
   try {
     if (idempotencyKey) {
-      await recordIdempotency(idempotencyKey, reservationId);
+      // 予約本体とべき等性レコードを単一トランザクションで原子的に書き込む。
+      // 片方だけ書き込まれる（= 予約が無いのにべき等キーだけ残る）状態を防ぐ。
+      await dynamo.send(
+        new TransactWriteCommand({
+          TransactItems: [
+            {
+              Put: {
+                TableName: TABLE_NAME,
+                Item: { PK: `IDEMPOTENCY#${idempotencyKey}`, SK: "META", reservationId, createdAt: now },
+                ConditionExpression: "attribute_not_exists(PK)",
+              },
+            },
+            {
+              Put: { TableName: TABLE_NAME, Item: reservationItem },
+            },
+          ],
+        })
+      );
+    } else {
+      await dynamo.send(new PutCommand({ TableName: TABLE_NAME, Item: reservationItem }));
     }
-    await dynamo.send(
-      new PutCommand({
-        TableName: TABLE_NAME,
-        Item: {
-          PK: `RESERVATION#${reservationId}`,
-          SK: "META",
-          reservationId,
-          guestName,
-          checkIn,
-          checkOut,
-          roomType,
-          nights,
-          totalPriceJpy,
-          status: "CONFIRMED",
-          createdAt: new Date().toISOString(),
-        },
-      })
-    );
   } catch (err) {
-    if (err.name === "ConditionalCheckFailedException" && idempotencyKey) {
+    // 同一 idempotencyKey の競合（トランザクション条件失敗）→ 既存予約を返す
+    if (
+      (err.name === "TransactionCanceledException" || err.name === "ConditionalCheckFailedException") &&
+      idempotencyKey
+    ) {
       const existing = await findIdempotentReservation(idempotencyKey);
       if (existing) {
         return agentResponse(event, { success: true, reservationId: existing, deduplicated: true });

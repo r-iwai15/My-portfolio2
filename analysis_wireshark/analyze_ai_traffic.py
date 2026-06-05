@@ -18,6 +18,27 @@ def resolve_geolite_db(pattern: str) -> str:
     return str(matches[0])
 
 
+def is_private_ip(ip: str) -> bool:
+    try:
+        return ipaddress.ip_address(ip).is_private
+    except ValueError:
+        return False
+
+
+def is_egress(src_ip: str, dst_ip: str) -> bool:
+    """プライベート IP（自端末/ローカル）→ パブリック IP（外部）の Egress 通信のみ True。
+
+    README が謳う「データ主権監査」の本質はこの方向の通信だけを抽出すること。
+    ローカル内通信や受信（Ingress）はノイズなので除外する。
+    """
+    try:
+        src = ipaddress.ip_address(src_ip)
+        dst = ipaddress.ip_address(dst_ip)
+    except ValueError:
+        return False
+    return src.is_private and dst.is_global
+
+
 def get_ip_info_local(ip, city_reader, asn_reader):
     try:
         if ipaddress.IPv4Address(ip).is_private:
@@ -69,6 +90,7 @@ def analyze_all_captures(city_db, asn_db, output_csv):
 
     traffic_data = {}
     total_packets_count = 0
+    egress_packets_count = 0
 
     with geoip2.database.Reader(city_db) as city_reader, geoip2.database.Reader(asn_db) as asn_reader:
         for pcap_file in pcap_files:
@@ -83,6 +105,11 @@ def analyze_all_captures(city_db, asn_db, output_csv):
                         dst_ip = packet.ip.dst
                         src_mac = packet.eth.src
                         dst_mac = packet.eth.dst
+
+                        # Egress（プライベート→パブリック）以外は監査対象外として除外
+                        if not is_egress(src_ip, dst_ip):
+                            continue
+                        egress_packets_count += 1
                         conn_key = (src_ip, dst_ip)
 
                         if conn_key not in traffic_data:
@@ -138,7 +165,10 @@ def analyze_all_captures(city_db, asn_db, output_csv):
 
     print("\n=== 全ファイルの解析完了 ===")
     print(f"総パケット数: {total_packets_count}")
-    print(f"集約された通信ペア数: {len(traffic_data)}")
+    print(f"Egress（プライベート→パブリック）パケット数: {egress_packets_count}")
+    print(f"集約された Egress 通信ペア数: {len(traffic_data)}")
+    if len(traffic_data) == 0:
+        print("→ 外部向け Egress 通信は検出されませんでした（オフライン稼働の根拠）。")
     print(f"結果を {output_csv} に保存しました。")
 
 

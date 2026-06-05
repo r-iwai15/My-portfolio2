@@ -23,6 +23,17 @@ resource "aws_security_group" "lambda_sg" {
   name   = "${var.app_name}-lambda-sg"
   vpc_id = aws_vpc.main.id
 
+  # このSGはLambda（クライアント）とインターフェース型VPCエンドポイント（サーバ）の
+  # 双方にアタッチされる。エンドポイントENIがVPC内からの接続を受けるには
+  # インバウンド443が必須（無いとBedrock/KMS/Logs/Cognito等に到達できない）。
+  ingress {
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = [aws_vpc.main.cidr_block]
+    description = "HTTPS to interface VPC endpoints from within the VPC"
+  }
+
   egress {
     from_port   = 443
     to_port     = 443

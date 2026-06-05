@@ -12,7 +12,7 @@ resource "aws_subnet" "private" {
   count = 2
 
   vpc_id            = aws_vpc.main.id
-  cidr_block        = count.index == 0 ? "10.4.1.0/24" : "10.4.2.0/24"
+  cidr_block        = cidrsubnet(var.vpc_cidr, 8, count.index + 1)
   availability_zone = "${var.region}${count.index == 0 ? "a" : "c"}"
 
   tags = {
@@ -95,6 +95,15 @@ resource "aws_vpc_endpoint" "bedrock_runtime" {
 resource "aws_vpc_endpoint" "s3" {
   vpc_id            = aws_vpc.main.id
   service_name      = "com.amazonaws.${var.region}.s3"
+  vpc_endpoint_type = "Gateway"
+  route_table_ids   = [aws_route_table.private.id]
+}
+
+# 会話履歴テーブル（rag_data.tf）へプライベートサブネットから到達するための
+# ゲートウェイエンドポイント。これがないと VPC 内 Lambda は DynamoDB に到達できない。
+resource "aws_vpc_endpoint" "dynamodb" {
+  vpc_id            = aws_vpc.main.id
+  service_name      = "com.amazonaws.${var.region}.dynamodb"
   vpc_endpoint_type = "Gateway"
   route_table_ids   = [aws_route_table.private.id]
 }

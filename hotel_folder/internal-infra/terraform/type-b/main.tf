@@ -4,7 +4,8 @@
 # 検証可能な「基盤のたたき」を Terraform 化し、残りは段階的に追加する。
 
 terraform {
-  required_version = ">= 1.0.0"
+  # use_lockfile（S3 ネイティブステートロック）は Terraform 1.10 以降の機能。
+  required_version = ">= 1.10.0"
 
   backend "s3" {
     bucket       = "YOUR-TERRAFORM-STATE-BUCKET"

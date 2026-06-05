@@ -1,7 +1,10 @@
 SHELL := /bin/bash
 
 # =====================================================
-# AI-Driven Internal Infrastructure — build & test
+# AI-Driven Internal Infrastructure — test & terraform validate
+#
+# 注: internal-infra の Lambda はスタブのため ZIP ビルド対象はありません
+#     （Terraform に aws_lambda_function 定義なし）。本番化時に build を追加します。
 # =====================================================
 
 PYTHON ?= python3

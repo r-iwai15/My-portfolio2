@@ -40,7 +40,7 @@ resource "aws_lambda_function" "interface" {
   environment {
     variables = {
       BEDROCK_AGENT_ID       = aws_bedrockagent_agent.orchestrator.agent_id
-      BEDROCK_AGENT_ALIAS_ID = var.bedrock_agent_alias_id
+      BEDROCK_AGENT_ALIAS_ID = aws_bedrockagent_agent_alias.prod.agent_alias_id
     }
   }
 }

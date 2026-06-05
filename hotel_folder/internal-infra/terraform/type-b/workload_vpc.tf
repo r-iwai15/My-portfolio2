@@ -11,7 +11,7 @@ resource "aws_vpc" "workload" {
 
 resource "aws_subnet" "private_a" {
   vpc_id            = aws_vpc.workload.id
-  cidr_block        = "10.3.1.0/24"
+  cidr_block        = cidrsubnet(var.vpc_cidr, 8, 1)
   availability_zone = "${var.region}a"
 
   tags = {
@@ -21,7 +21,7 @@ resource "aws_subnet" "private_a" {
 
 resource "aws_subnet" "private_c" {
   vpc_id            = aws_vpc.workload.id
-  cidr_block        = "10.3.2.0/24"
+  cidr_block        = cidrsubnet(var.vpc_cidr, 8, 2)
   availability_zone = "${var.region}c"
 
   tags = {

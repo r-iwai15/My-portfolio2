@@ -13,7 +13,8 @@
     "guestName": { "type": "string", "minLength": 1 },
     "checkIn": { "type": "string", "format": "date" },
     "checkOut": { "type": "string", "format": "date" },
-    "roomType": { "type": "string", "minLength": 1 }
+    "roomType": { "type": "string", "minLength": 1 },
+    "idempotencyKey": { "type": "string", "minLength": 8, "maxLength": 128 }
   },
   "additionalProperties": false
 }

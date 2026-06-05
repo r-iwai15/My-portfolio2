@@ -1,10 +1,15 @@
 {
+  "$id": "https://example.com/hotel/reservation-intent.json",
   "title": "ReservationIntent",
+  "description": "AI が提案する予約意図（実行前の検証用。Source of Truth ではない）",
   "type": "object",
   "required": ["action"],
   "properties": {
-    "action": { "type": "string", "enum": ["create", "update", "cancel"] },
-    "reservationId": { "type": "string", "minLength": 1 },
+    "action": {
+      "type": "string",
+      "enum": ["create", "update", "cancel"]
+    },
+    "reservationId": { "type": "string", "pattern": "^RES-[A-Z0-9]+$" },
     "guestName": { "type": "string", "minLength": 1 },
     "checkIn": { "type": "string", "format": "date" },
     "checkOut": { "type": "string", "format": "date" },

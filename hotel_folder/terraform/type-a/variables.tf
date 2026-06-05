@@ -18,8 +18,6 @@ variable "reservation_zip_path" {
   default = "../../lambda/reservation.zip"
 }
 
-variable "bedrock_agent_alias_id" {
-  description = "Bedrock Agent alias ID for interface Lambda InvokeAgent call."
-  type        = string
-  default     = "prod"
-}
+# NOTE: interface Lambda の BEDROCK_AGENT_ALIAS_ID は
+# aws_bedrockagent_agent_alias.prod.agent_alias_id（AWS 自動採番の ID）を
+# 直接参照する（lambda.tf 参照）。エイリアス「名」とは別物なので変数化しない。

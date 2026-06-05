@@ -72,6 +72,39 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "compliance_logs" 
   }
 }
 
+# コンプライアンスログは改ざん・誤削除に備えてバージョニングを有効化
+resource "aws_s3_bucket_versioning" "compliance_logs" {
+  bucket = aws_s3_bucket.compliance_logs.id
+  versioning_configuration {
+    status = "Enabled"
+  }
+}
+
+# 転送時暗号化（TLS）を強制：HTTP 経由のアクセスは拒否
+resource "aws_s3_bucket_policy" "compliance_logs" {
+  bucket     = aws_s3_bucket.compliance_logs.id
+  depends_on = [aws_s3_bucket_public_access_block.compliance_logs]
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid       = "DenyInsecureTransport"
+        Effect    = "Deny"
+        Principal = "*"
+        Action    = "s3:*"
+        Resource = [
+          aws_s3_bucket.compliance_logs.arn,
+          "${aws_s3_bucket.compliance_logs.arn}/*"
+        ]
+        Condition = {
+          Bool = { "aws:SecureTransport" = "false" }
+        }
+      }
+    ]
+  })
+}
+
 resource "aws_cloudwatch_log_group" "security_findings" {
   name              = "/aws/${var.name_prefix}/security-findings"
   retention_in_days = 365

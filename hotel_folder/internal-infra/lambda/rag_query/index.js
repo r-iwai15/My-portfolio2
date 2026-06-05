@@ -2,12 +2,18 @@
  * Type-A internal RAG query stub.
  * In production: call Bedrock Knowledge Base RetrieveAndGenerate or Agents.
  */
+function parseBodyQuery(body) {
+  if (typeof body !== "string") return "";
+  try {
+    return JSON.parse(body || "{}").query || "";
+  } catch {
+    return "";
+  }
+}
+
 export async function handler(event) {
-  const q =
-    event?.query ||
-    event?.body?.query ||
-    (typeof event?.body === "string" ? JSON.parse(event.body || "{}").query : "") ||
-    "";
+  const raw = event?.query || event?.body?.query || parseBodyQuery(event?.body) || "";
+  const q = typeof raw === "string" ? raw : String(raw);
 
   if (!q.trim()) {
     return {

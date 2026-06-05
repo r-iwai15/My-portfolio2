@@ -1,12 +1,14 @@
 """
 Sentinel Cloud-Native (Type-A internal): preventive response stub.
-Maps events to session revoke / VA policy tighten placeholders.
+Maps events to session revoke / edge-block placeholders.
 """
+
+import json
 
 
 def lambda_handler(event, context):
     detail = event.get("detail", event)
-    threat_type = (detail.get("threatType") or "UNKNOWN").upper()
+    threat_type = str(detail.get("threatType") or "UNKNOWN").upper()
 
     if threat_type == "IAM_ANOMALY":
         action = "invalidate_sessions"
@@ -17,5 +19,5 @@ def lambda_handler(event, context):
 
     return {
         "statusCode": 200,
-        "body": {"threatType": threat_type, "action": action},
+        "body": json.dumps({"threatType": threat_type, "action": action}),
     }

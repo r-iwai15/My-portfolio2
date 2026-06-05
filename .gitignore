@@ -55,4 +55,6 @@ credentials.json
 # ローカル専用メモ（GitHub に上げない）
 private-notes/
 *_自分用.md
+# 例外: 修正・点検記録は公開する
+!修正・点検記録_自分用.md
 GITHUB公開手順.md

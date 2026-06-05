@@ -37,8 +37,6 @@ GeoLite データベースの配置
 
 MaxMind GeoLite2 は **`geolite/` ディレクトリに統一**してください（`python/` 内の重複コピーは使用しません）。スクリプトは `geolite/**/GeoLite2-City.mmdb` と `GeoLite2-ASN.mmdb` を自動検出します。
 
-> **GitHub:** `.mmdb` は MaxMind ライセンスのため **リポジトリに含めていません**。clone 後は [`geolite/README.md`](geolite/README.md) の手順でローカル配置してください。
-
 使用方法 (Usage)
 
 1. 事前準備
@@ -46,9 +44,15 @@ MaxMind GeoLite2 は **`geolite/` ディレクトリに統一**してくださ�
 1. Wireshark（TShark）がシステムにインストールされていることを確認します。
 
 2. 必要なPythonライブラリをインストールします。
-pip install pyshark geoip2
+pip install -r requirements.txt
 
-3. MaxMind公式サイトより以下の無料データベース（.mmdb）をダウンロードし、スクリプトと同じディレクトリに配置します。
+	（`pyshark` / `geoip2` / `mac-vendor-lookup` が入ります）
+
+	※ 完全オフラインで実行する場合、MACベンダー DB の自動更新（`MacLookup.update_vendors()`）は
+	  ネットワークへアクセスしようとします。オフライン時は更新がスキップされ、`mac-vendor-lookup`
+	  に同梱の既存 DB が使われます（処理は継続します）。
+
+3. MaxMind公式サイトより以下の無料データベース（.mmdb）をダウンロードし、`geolite/` ディレクトリに配置します（`*.mmdb` は容量とライセンスの都合でリポジトリには含めていません）。
 
 	• GeoLite2-City.mmdb
 
@@ -73,16 +77,17 @@ user@example-host portfolio % python3 analyze_ai_traffic.py
 
 === 全ファイルの解析完了 ===
 総パケット数: 34395
-集約された外部通信先数: 19
+Egress（プライベート→パブリック）パケット数: 4503
+集約された Egress 通信ペア数: 19
 結果を analysis_report.csv に保存しました。
 
 
-実行完了後、analysis_report.csv が生成されます。
+実行完了後、analysis_report.csv が生成されます（プライベート→パブリックの Egress 通信のみ）。
 
-Destination IP	Country	Organization (ASN)	Total Packet Count
-198.51.100.10	United States	Amazon.com, Inc. (CloudFront)	4420
-198.51.100.11	Japan	Yahoo Japan	68
-203.0.113.1	United States	Google LLC	15
+Source IP	Source Country	Source Organization	Destination IP	Dest Country	Dest Organization	Total Packet Count
+192.168.1.10	Private Network	Apple [xx:xx:xx:xx:xx:xx]	198.51.100.10	United States	Amazon.com, Inc. (CloudFront)	4420
+192.168.1.10	Private Network	Apple [xx:xx:xx:xx:xx:xx]	198.51.100.11	Japan	Yahoo Japan	68
+192.168.1.10	Private Network	Apple [xx:xx:xx:xx:xx:xx]	203.0.113.1	United States	Google LLC	15
 
 考察とユースケース (Analysis & Use Cases)
 

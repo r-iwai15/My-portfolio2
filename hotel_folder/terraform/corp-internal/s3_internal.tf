@@ -49,3 +49,28 @@ resource "aws_s3_bucket_lifecycle_configuration" "internal_artifacts" {
     }
   }
 }
+
+# 転送時暗号化（TLS）を強制：HTTP 経由のアクセスは拒否
+resource "aws_s3_bucket_policy" "internal_artifacts" {
+  bucket     = aws_s3_bucket.internal_artifacts.id
+  depends_on = [aws_s3_bucket_public_access_block.internal_artifacts]
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid       = "DenyInsecureTransport"
+        Effect    = "Deny"
+        Principal = "*"
+        Action    = "s3:*"
+        Resource = [
+          aws_s3_bucket.internal_artifacts.arn,
+          "${aws_s3_bucket.internal_artifacts.arn}/*"
+        ]
+        Condition = {
+          Bool = { "aws:SecureTransport" = "false" }
+        }
+      }
+    ]
+  })
+}

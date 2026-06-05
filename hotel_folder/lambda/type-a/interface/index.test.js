@@ -48,6 +48,12 @@ describe("Interface Lambda (API Gateway → Bedrock Agent)", () => {
     expect(mockAgentSend).not.toHaveBeenCalled();
   });
 
+  it("不正なJSONボディの場合は500ではなく400を返す", async () => {
+    const res = await handler({ body: "{not json", requestContext: { apiId: "x" } });
+    expect(res.statusCode).toBe(400);
+    expect(mockAgentSend).not.toHaveBeenCalled();
+  });
+
   it("Bedrock Agentが失敗した場合は502を返す", async () => {
     mockAgentSend.mockRejectedValue(new Error("Agent timeout"));
     const res = await handler(makeApiGwEvent("予約したい"));
