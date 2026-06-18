@@ -24,7 +24,7 @@ jobs:
         with:
           python-version: "3.11"
 
-      - uses: hashicorp/setup-terraform@v3
+      - uses: hashicorp/setup-terraform@v4
 
       - name: Verify Python for tests
         run: |
