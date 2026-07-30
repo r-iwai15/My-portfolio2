@@ -7,7 +7,7 @@
   },
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.0.0",
-    "@aws-sdk/lib-dynamodb": "^3.0.0",
+    "@aws-sdk/lib-dynamodb": "^3.1098.0",
     "ajv": "^8.12.0",
     "ajv-formats": "^3.0.1"
   },
